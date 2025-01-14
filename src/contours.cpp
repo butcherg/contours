@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <iostream>
 
 
 using namespace cv;
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
 	if (border) {
 		unsigned b = 2;
 		Mat binary1;
-		copyMakeBorder( binary, binary1, b, b, b, b, BORDER_CONSTANT, Scalar(255,255,255) );
+		//copyMakeBorder( binary, binary1, b, b, b, b, BORDER_CONSTANT, Scalar(255,255,255) );
 		binary = binary1;
 	}
 
@@ -143,7 +144,7 @@ int main(int argc, char **argv) {
 	else {
 		for (const auto& contour : culledcontours) 
 			drawContours(image, vector<vector<Point>>{contour}, 0, Scalar(0, 0, 255), 2);
-		imwrite(destimage, image);
+		cv::imwrite(destimage, image);
 	}
 
     return 0;
