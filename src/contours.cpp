@@ -90,6 +90,11 @@ int main(int argc, char **argv) {
 	fprintf(stderr, "threshold: %d  epsilon: %0.2f ", thresh, epsilon);
 	if (destimage.size() > 0) fprintf(stderr, "destimage: %s\n", destimage.c_str()); else fprintf(stderr, "\n");
 	fflush(stderr);
+	
+	if (border) {
+		unsigned b = 2;
+		copyMakeBorder( image, image, b, b, b, b, BORDER_CONSTANT, Scalar(255,255,255) );
+	}
 
     // Convert to grayscale
     Mat gray;
@@ -98,13 +103,6 @@ int main(int argc, char **argv) {
     // Threshold to create a binary image
     Mat binary;
     threshold(gray, binary, thresh, 255, THRESH_BINARY);
-	
-	if (border) {
-		unsigned b = 2;
-		Mat binary1;
-		//copyMakeBorder( binary, binary1, b, b, b, b, BORDER_CONSTANT, Scalar(255,255,255) );
-		binary = binary1;
-	}
 
     // Find contours
     vector<vector<Point>> contours, culledcontours;
