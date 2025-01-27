@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
 	unsigned thresh = 128;
 	float epsilon = 3.0;
 	bool border = false;
+	int bw = 1;  // border width, default = 1
 	unsigned minarea = 0;
 	
 	string destimage = "";
@@ -78,6 +79,8 @@ int main(int argc, char **argv) {
 		}
 		else if(string(argv[i]).find("border") != string::npos) {
 			border = true;
+			string b = val(argv[i]);
+			if (b.size() > 0) bw = atoi(b.c_str());
 		}
 		else if(string(argv[i]).find("minarea") != string::npos) {
 			string m = val(argv[i]);
@@ -92,8 +95,7 @@ int main(int argc, char **argv) {
 	fflush(stderr);
 	
 	if (border) {
-		unsigned b = 2;
-		copyMakeBorder( image, image, b, b, b, b, BORDER_CONSTANT, Scalar(255,255,255) );
+		copyMakeBorder( image, image, bw, bw, bw, bw, BORDER_CONSTANT, Scalar(255,255,255) );
 	}
 
     // Convert to grayscale
