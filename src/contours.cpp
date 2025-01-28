@@ -1,6 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
+//extract parameter statements with:   grep "//parm" ../src/contours.cpp | awk -F'//parm' '{printf "cout << \"" $2 "\" << endl << endl;\n" }'
+
 
 using namespace cv;
 using namespace std;
@@ -42,16 +44,18 @@ string val(string nameval)
 
 int main(int argc, char **argv) {
 	if (argc < 2) {	
-		cout << "Usage:\n";
-		cout << "\twhitepatch <inputimage> [threshold=<int>|epsilon=<float>|border|minarea=<int>|destimage=<outputimage>]...\n\n";
-		cout << "\tWhere:\n";
-		cout << "\t\tthreshold: The value between determining if a pixel goes white or black in the gray->binary translation. Default: 128\n";
-		cout << "\t\tepsilon: The value used to specify the degree of simplification of contours, larger is simpler.\n";
-		cout << "\t\t\tSet to 0.0 to disable.  Default: 3.0\n";
-		cout << "\t\tborder: If present, a 2px white border is added to the image to isolate the contours.\n";
-		cout << "\t\tminarea: Contours with area less than this number are culled from the list.\n";
-		cout << "\t\tdestimage: Filename of the image upon which to display the contours drawn on the input image.\n";
-		cout << "\t\t\tIf not present, the OpenSCAD array of contour arrays is printed for redirection to a text file.\n";
+		cout << "Usage: twhitepatch <inputimage> [threshold=<int>|epsilon=<float>|border|minarea=<int>|destimage=<outputimage>]...\n\n";
+		cout << "Where:\n\n";
+		
+cout << " threshold: rubicon between black and white for the gray->binary translation, betwee 0 and 255.  Default: 128" << endl << endl;
+cout << " resize: if defined, resizes the input image using WxH, e.g., 'resize:640x480'.  If either width or height is not specified, the resize of that dimension is calculated with the proportion of the defined dimension to the original image dimension, e.g., 'resize:640', or 'resize:x480'" << endl << endl;
+cout << " epsilon: The value used to specify the degree of simplification of contours, larger is simpler.  Set to 0.0 to disable.  Default: 3.0" << endl << endl;
+cout << " border: if defined, draws a white border around the image, useful for isolating contours that butt up against the image edge.  Default width: 1" << endl << endl;
+cout << " minarea: minimum area of a valid contour.  Default: 0" << endl << endl;
+cout << " minpoints: culls polygons with number of points less than this number.  Default: 4" << endl << endl;
+cout << " destimage: if defined, outputs the original image wtih the contours drawn in red.  If not defined, program dumps an OpenSCAD array called 'p', contains the contours defined as point lists." << endl << endl;
+
+
 		cout << endl;
 		exit(EXIT_SUCCESS);
 		
@@ -62,36 +66,61 @@ int main(int argc, char **argv) {
 	
 	unsigned thresh = 128;
 	float epsilon = 3.0;
-	bool border = false;
+	bool border = false, resize = false;
 	int bw = 1;  // border width, default = 1
-	unsigned minarea = 0;
+	unsigned minarea = 0, minpoints=4;
+	unsigned rw, rh;
 	
 	string destimage = "";
 	
 	for (unsigned i=1; i<argc; i++) {
-		if(string(argv[i]).find("threshold") != string::npos) {
+		if(string(argv[i]).find("threshold") != string::npos) {  //parm threshold: rubicon between black and white for the gray->binary translation, betwee 0 and 255.  Default: 128
 			string t = val(argv[i]);
 			if (t.size() > 0) thresh = atoi(t.c_str());
 		}
-		else if(string(argv[i]).find("epsilon") != string::npos) {
+		if(string(argv[i]).find("resize") != string::npos) {  //parm resize: if defined, resizes the input image using WxH, e.g., 'resize:640x480'.  If either width or height is not specified, the resize of that dimension is calculated with the proportion of the defined dimension to the original image dimension, e.g., 'resize:640', or 'resize:x480'
+			string r = val(argv[i]);
+			vector<string> dim = split(r, "x");
+			if (dim[0].size() == 0 & dim[1].size() == 0) err("invalid dimension");
+			if (dim.size() == 1) {
+				rw = atoi(r.c_str());
+				rh = int((float) image.rows * ((float) rw / (float) image.cols));
+				resize = true;
+			}
+			else if (dim.size() == 2) {
+				if (dim[0].size() == 0) 
+					rw = int((float) image.cols * ((float) rh / (float) image.rows));
+				else 
+					rw = atoi(dim[0].c_str());
+				rh = atoi(dim[1].c_str());
+				resize = true;
+			}
+		}
+		else if(string(argv[i]).find("epsilon") != string::npos) {  //parm epsilon: The value used to specify the degree of simplification of contours, larger is simpler.  Set to 0.0 to disable.  Default: 3.0
 			string e = val(argv[i]);
 			if (e.size() > 0) epsilon = atoi(e.c_str());
 		}
-		else if(string(argv[i]).find("border") != string::npos) {
+		else if(string(argv[i]).find("border") != string::npos) { //parm border: if defined, draws a white border around the image, useful for isolating contours that butt up against the image edge.  Default width: 1
 			border = true;
 			string b = val(argv[i]);
 			if (b.size() > 0) bw = atoi(b.c_str());
 		}
-		else if(string(argv[i]).find("minarea") != string::npos) {
+		else if(string(argv[i]).find("minarea") != string::npos) { //parm minarea: minimum area of a valid contour.  Default: 0
 			string m = val(argv[i]);
 			if (m.size() > 0) minarea = atoi(m.c_str());
 		}
-		else if(string(argv[i]).find("destimage") != string::npos) {
+		else if(string(argv[i]).find("minpoints") != string::npos) {  //parm minpoints: culls polygons with number of points less than this number.  Default: 4
+			string m = val(argv[i]);
+			if (m.size() > 0) minpoints = atoi(m.c_str());
+		}
+		else if(string(argv[i]).find("destimage") != string::npos) {  //parm destimage: if defined, outputs the original image wtih the contours drawn in red.  If not defined, program dumps an OpenSCAD array called 'p', contains the contours defined as point lists.
 			destimage = val(argv[i]);
 		}
 	}
-	fprintf(stderr, "threshold: %d  epsilon: %0.2f ", thresh, epsilon);
-	if (destimage.size() > 0) fprintf(stderr, "destimage: %s\n", destimage.c_str()); else fprintf(stderr, "\n");
+	fprintf(stderr, "image dimensions: %dx%d\n", image.rows, image.cols);
+	fprintf(stderr, "threshold: %d  epsilon: %0.2f\n", thresh, epsilon);
+	if (resize) fprintf(stderr, "resize: %dx%d\n", rw, rh);
+	if (destimage.size() > 0) fprintf(stderr, "destimage: %s\n", destimage.c_str());
 	fflush(stderr);
 	
 	if (border) {
@@ -112,7 +141,7 @@ int main(int argc, char **argv) {
 	
 	//cull contours and points
 	for (const auto& contour : contours) {
-		if (contour.size() <= 4) continue;  //invalid contour
+		if (contour.size() <= minpoints) continue;  //invalid contour
 		if (contourArea(contour) < minarea) continue;  //too small
 		vector<Point> pts;
 		if (epsilon > 0.0) {  //
