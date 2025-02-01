@@ -66,7 +66,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	
 	unsigned thresh = 128;
 	float epsilon = 3.0;
-	bool border = false, resize = false;
+	bool border = false, resize_image = false;
 	int bw = 1;  // border width, default = 1
 	unsigned minarea = 0, minpoints=4;
 	unsigned rw, rh;
@@ -85,15 +85,15 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 			if (dim.size() == 1) {
 				rw = atoi(r.c_str());
 				rh = int((float) image.rows * ((float) rw / (float) image.cols));
-				resize = true;
+				resize_image = true;
 			}
 			else if (dim.size() == 2) {
+				rh = atoi(dim[1].c_str());
 				if (dim[0].size() == 0) 
 					rw = int((float) image.cols * ((float) rh / (float) image.rows));
 				else 
 					rw = atoi(dim[0].c_str());
-				rh = atoi(dim[1].c_str());
-				resize = true;
+				resize_image = true;
 			}
 		}
 		else if(string(argv[i]).find("epsilon") != string::npos) {  //parm epsilon: The value used to specify the degree of simplification of contours, larger is simpler.  Set to 0.0 to disable.  Default: 3.0
@@ -117,11 +117,15 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 			destimage = val(argv[i]);
 		}
 	}
-	fprintf(stderr, "image dimensions: %dx%d\n", image.rows, image.cols);
+	fprintf(stderr, "image dimensions: %dx%d\n", image.cols, image.rows);
 	fprintf(stderr, "threshold: %d  epsilon: %0.2f\n", thresh, epsilon);
 	if (resize) fprintf(stderr, "resize: %dx%d\n", rw, rh);
 	if (destimage.size() > 0) fprintf(stderr, "destimage: %s\n", destimage.c_str());
 	fflush(stderr);
+	
+	if (resize_image) {
+		resize(image, image, Size(rw, rh), 0, 0, INTER_LANCZOS4);
+	}
 	
 	if (border) {
 		copyMakeBorder( image, image, bw, bw, bw, bw, BORDER_CONSTANT, Scalar(255,255,255) );
