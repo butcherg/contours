@@ -44,7 +44,7 @@ string val(string nameval)
 
 int main(int argc, char **argv) {
 	if (argc < 2) {	
-		cout << "Usage: twhitepatch <inputimage> [threshold=<int>|epsilon=<float>|border|minarea=<int>|destimage=<outputimage>]...\n\n";
+		cout << "Usage: contours <inputimage> [threshold=<int>|epsilon=<float>|border|minarea=<int>|destimage=<outputimage>]...\n\n";
 		cout << "Where:\n\n";
 		
 cout << " threshold: rubicon between black and white for the gray->binary translation, betwee 0 and 255.  Default: 128" << endl << endl;
@@ -66,7 +66,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	
 	unsigned thresh = 128;
 	float epsilon = 3.0;
-	bool border = false, resize_image = false;
+	bool border = false, resize_image = false, boundingbox = false, bashwidths = false;
 	int bw = 1;  // border width, default = 1
 	unsigned minarea = 0, minpoints=4;
 	unsigned rw, rh;
@@ -116,6 +116,12 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 		else if(string(argv[i]).find("destimage") != string::npos) {  //parm destimage: if defined, outputs the original image wtih the contours drawn in red.  If not defined, program dumps an OpenSCAD array called 'p', contains the contours defined as point lists.
 			destimage = val(argv[i]);
 		}
+		else if (string(argv[i]).find("boundingbox") != string::npos) { //parm boundingbox: if defined, the polygons are four-point polygons describing the contours' bounding boxes
+			boundingbox = true;
+		}
+		else if (string(argv[i]).find("bashwidths") != string::npos) { //parm bashwidths: if defined, just print a bash array of the width x,ys to stdout
+			bashwidths = true;
+		}
 	}
 	fprintf(stderr, "image dimensions: %dx%d\n", image.cols, image.rows);
 	fprintf(stderr, "threshold: %d  epsilon: %0.2f\n", thresh, epsilon);
@@ -141,14 +147,26 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 
     // Find contours
     vector<vector<Point>> contours, culledcontours;
-    findContours(binary, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
+	vector<Vec4i> hierarchy;
+    //findContours(binary, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
+	findContours(binary, contours, hierarchy, RETR_LIST, CHAIN_APPROX_NONE);
 	
 	//cull contours and points
 	for (const auto& contour : contours) {
 		if (contour.size() <= minpoints) continue;  //invalid contour
 		if (contourArea(contour) < minarea) continue;  //too small
 		vector<Point> pts;
-		if (epsilon > 0.0) {  //
+		if (boundingbox) {
+			fprintf(stderr, "using bounding box..\n"); fflush(stderr);
+			Rect bb = boundingRect(contour);
+			vector<Point> pts;
+			pts.push_back(Point(bb.x, bb.y));
+			pts.push_back(Point(bb.x+bb.width, bb.y));
+			pts.push_back(Point(bb.x+bb.width, bb.y+bb.height));
+			pts.push_back(Point(bb.x, bb.y+bb.height));
+			culledcontours.push_back(pts);
+		}	
+		else if (epsilon > 0.0) { 
 			vector<Point> pts;
 			approxPolyDP(contour, pts, epsilon, true);
 			culledcontours.push_back(pts);
@@ -158,9 +176,24 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 		}
 	}
 	
-	fprintf(stderr, "poly count: %ld\n", culledcontours.size()); fflush(stderr);
+	fprintf(stderr, "poly count: %ld\n\n", culledcontours.size()+1); fflush(stderr);
+	
+	if (bashwidths) {
+		cout << "(";
+		for (const auto& contour : culledcontours) {
+			Rect r = boundingRect(contour);
+			int wx = r.width-1;
+			int wy = r.height-1;
+			cout << " \"" << wx << "," << wy << "\"";
+			//if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
+		cout << ")" << endl;
+		
+		return 0;
+	}
 
 	if (destimage.size() == 0) { // spit out OpenSCAD polygon points
+		cout << "//contour polygons" << endl;
 		cout << "p = [" << endl;
 		for (const auto& contour : culledcontours) {
 			cout << "  [" << endl;
@@ -170,6 +203,41 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 				
 			}
 			cout << "  ]" ; //<< endl;
+			if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
+		cout << "];" << endl << endl;
+		
+		//center points of each contour:
+		cout << endl << "//center points" << endl;
+		cout << "pc = [" << endl;
+		for (const auto& contour : culledcontours) {
+			Moments M = moments(contour);
+			int cx = int(M.m10 / M.m00);
+			int cy = int(M.m01 / M.m00);
+			cout << "  [" << cx << "," << cy << "]";
+			if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
+		cout << "];" << endl << endl;
+		
+		//widths of each contour:
+		cout << endl << "//widths/heights" << endl;
+		cout << "pw = [" << endl;
+		for (const auto& contour : culledcontours) {
+			Rect r = boundingRect(contour);
+			int wx = r.width-1;
+			int wy = r.height-1;
+			cout << "  [" << wx << "," << wy << "]";
+			if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
+		cout << "];" << endl;
+		
+		cout << endl << "//translate coordinates" << endl;
+		cout << "pt = [" << endl;
+		for (const auto& contour : culledcontours) {
+			Rect r = boundingRect(contour);
+			int x = r.x;
+			int y = r.y;
+			cout << "  [" << x << "," << y << "," << "0" << "]";
 			if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
 		}
 		cout << "];" << endl;
