@@ -193,10 +193,12 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	}
 
 	if (destimage.size() == 0) { // spit out OpenSCAD polygon points
+		int count = 0;
 		cout << "//contour polygons" << endl;
 		cout << "p = [" << endl;
 		for (const auto& contour : culledcontours) {
-			cout << "  [" << endl;
+			cout << "  [" "   // " << count << endl;
+			count++;
 			for (const auto& point : contour) {
 				cout << "    [" << point.x << "," << point.y << "]"; // << endl;
 				if (point != contour[contour.size()-1]) cout << "," << endl; else cout << endl;
@@ -239,6 +241,17 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 			int y = r.y;
 			cout << "  [" << x << "," << y << "," << "0" << "]";
 			if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
+		cout << "];" << endl;
+		
+		cout << endl << "//user translate coordinates" << endl;
+		cout << "pr = [" << endl;
+		count = 0;
+		for (const auto& contour : culledcontours) {
+			cout << "  [" << 0 << "," << 0 << "," << 0 << "]";
+			if (contour != culledcontours[culledcontours.size()-1]) cout << ","; 
+			cout << "  // " << count << endl;
+			count++;
 		}
 		cout << "];" << endl;
 	}
