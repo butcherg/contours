@@ -45,3 +45,4 @@ The options are:
 
 
 ## License
+MIT
