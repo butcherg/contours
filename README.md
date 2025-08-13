@@ -24,6 +24,14 @@ Where param can be any of the following, in any order to the right of the input 
 
 Note that if destimage is omitted, the OpenSCAD array definition prints to stdout, so it needs to be piped to a file to capture it.
 
+The generated OpenSCAD code is a collection of arrays-of-arrays:
+
+- p: array of the contour polygon arrays.
+- pc: x,y center points of each contour.
+- pw: w,h width/height coordinates of each contour.
+- pt: translate coordinates for each polygon.  Note, the polygon coordinates in p are already translated, this array is for moving textures to align wtih contours.
+- pr: a set of 0,0,0 coordinates for post-generation user translations, e.g., if you want a particular stone to cantilever out of the wall, set its pr z to some positive number and use it in translate().
+
 ## Building
 
 If OpenCV is available for compiling/linking at a system location:
