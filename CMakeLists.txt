@@ -3,7 +3,6 @@ project(contours VERSION 0.1)
 
 #set(CMAKE_CXX_STANDARD 20)
 
-
 string(TIMESTAMP BUILDDATE)
 add_compile_options(-ggdb -Wno-deprecated-enum-enum-conversion -DVERSION="${CMAKE_PROJECT_VERSION}"  -DBUILDDATE="${BUILDDATE}")
 
@@ -67,10 +66,10 @@ if (DEFINED BUILD_OPENCV)
 	set(OPENCV_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/usr/include)
 	set(OPENCV_INC_DIR ${LIBNOISE_INCLUDE_DIR} CACHE STRING "opencv include directory")
 	set(OPENCV_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/usr/lib)
-	set(OPENCV_LIB   ${CMAKE_CURRENT_BINARY_DIR}/external/usr/lib/libopencv_imgcodecs.a ${CMAKE_CURRENT_BINARY_DIR}/external/usr/lib/libopencv_imgproc.a  ${CMAKE_CURRENT_BINARY_DIR}/external/usr/lib/libopencv_core.a )
+	set(OPENCV_LIB   ${OPENCV_LIB_DIR}/libopencv_imgcodecs.a ${OPENCV_LIB_DIR}/libopencv_imgproc.a  ${OPENCV_LIB_DIR}/libopencv_core.a )
 	
 	add_library(opencv STATIC IMPORTED)
-	set_target_properties(opencv PROPERTIES IMPORTED_LOCATION ${OPENCV_LIB_DIR} ) #"${OPENCV_LIB_DIR}/libopencv_imgproc.a  ${OPENCV_LIB_DIR}/libopencv_core.a" )
+	set_target_properties(opencv PROPERTIES IMPORTED_LOCATION ${OPENCV_LIB_DIR} ) 
 	set(OPENCV_FOUND TRUE)
 	add_dependencies(contours opencv_download)
 	
