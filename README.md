@@ -50,6 +50,8 @@ The options are:
 - SRCPKG: The OpenCV library .tar.gz is downloaded, unpacked, and built.
 - .tar.gz-file: This is a path to an already-downloaded OpenCV .tar.gz source code release file
 
+Recommend using -DBUILD_OPENCV=SRCPKG, as it will download version 4.12.0 which updates the minimum CMake versions to avoid bailing because new CMake is persnickity. 
+
 
 
 ## License

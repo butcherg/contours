@@ -42,7 +42,7 @@ if (DEFINED BUILD_OPENCV)
 		ExternalProject_Add(opencv_download
 			PREFIX external/opencv
 			#DOWNLOAD_DIR "external"
-			URL https://github.com/opencv/opencv/archive/refs/heads/4.x.zip
+			URL https://github.com/opencv/opencv/archive/refs/tags/4.12.0.tar.gz
 			DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 			CMAKE_COMMAND	${CMAKECMD}
 			CMAKE_ARGS ${CMAKE_ARGUMENTS}
