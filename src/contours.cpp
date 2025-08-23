@@ -66,7 +66,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	
 	unsigned thresh = 128;
 	float epsilon = 3.0;
-	bool border = false, resize_image = false, boundingbox = false, bashwidths = false;
+	bool border = false, resize_image = false, boundingbox = false, bashdims = false, cmddims = false;
 	int bw = 1;  // border width, default = 1
 	unsigned minarea = 0, minpoints=4;
 	unsigned rw, rh;
@@ -119,8 +119,11 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 		else if (string(argv[i]).find("boundingbox") != string::npos) { //parm boundingbox: if defined, the polygons are four-point polygons describing the contours' bounding boxes
 			boundingbox = true;
 		}
-		else if (string(argv[i]).find("bashwidths") != string::npos) { //parm bashwidths: if defined, just print a bash array of the width x,ys to stdout
-			bashwidths = true;
+		else if (string(argv[i]).find("bashdims") != string::npos) { //parm bashdims: if defined, just print a bash array of the width/height x,ys to stdout
+			bashdims = true;
+		}
+		else if (string(argv[i]).find("cmddims") != string::npos) { //parm cmddims: if defined, just print a Windows batch file array of the width/height x,ys to stdout
+			cmddims = true;
 		}
 	}
 	fprintf(stderr, "image dimensions: %dx%d\n", image.cols, image.rows);
@@ -178,7 +181,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	
 	fprintf(stderr, "poly count: %ld\n\n", culledcontours.size()+1); fflush(stderr);
 	
-	if (bashwidths) {
+	if (bashdims) {
 		cout << "(";
 		for (const auto& contour : culledcontours) {
 			Rect r = boundingRect(contour);
@@ -188,6 +191,17 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 			//if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
 		}
 		cout << ")" << endl;
+		
+		return 0;
+	}
+	if (cmddims) {
+		for (const auto& contour : culledcontours) {
+			Rect r = boundingRect(contour);
+			int wx = r.width-1;
+			int wy = r.height-1;
+			cout << wx << "," << wy <<endl;
+			//if (contour != culledcontours[culledcontours.size()-1]) cout << "," << endl; else cout << endl;
+		}
 		
 		return 0;
 	}
