@@ -137,7 +137,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 	}
 	
 	if (border) {
-		copyMakeBorder( image, image, bw, bw, bw, bw, BORDER_CONSTANT, Scalar(255,255,255) );
+		copyMakeBorder( image, image, bw, bw, bw, bw, BORDER_CONSTANT, Scalar(0,0,0) );
 	}
 
     // Convert to grayscale
@@ -235,7 +235,7 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 		}
 		cout << "];" << endl << endl;
 		
-		//widths of each contour:
+		//widths/heights of each contour:
 		cout << endl << "//widths/heights" << endl;
 		cout << "pw = [" << endl;
 		for (const auto& contour : culledcontours) {
