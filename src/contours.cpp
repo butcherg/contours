@@ -53,7 +53,7 @@ cout << " epsilon: The value used to specify the degree of simplification of con
 cout << " border: if defined, draws a white border around the image, useful for isolating contours that butt up against the image edge.  Default width: 1" << endl << endl;
 cout << " minarea: minimum area of a valid contour.  Default: 0" << endl << endl;
 cout << " minpoints: culls polygons with number of points less than this number.  Default: 4" << endl << endl;
-cout << " destimage: if defined, outputs the original image wtih the contours drawn in red.  If not defined, program dumps an OpenSCAD array called 'p', contains the contours defined as point lists." << endl << endl;
+cout << " destimage: if defined, outputs the original image wtih the contours drawn in red labeled with the contour numbers.  If not defined, program dumps an OpenSCAD array called 'p', contains the contours defined as point lists." << endl << endl;
 
 
 		cout << endl;
@@ -269,9 +269,21 @@ cout << " destimage: if defined, outputs the original image wtih the contours dr
 		}
 		cout << "];" << endl;
 	}
-	else {
-		for (const auto& contour : culledcontours) 
-			drawContours(image, vector<vector<Point>>{contour}, 0, Scalar(0, 0, 255), 2);
+	else {  //write test image instead
+		unsigned count=0;
+		for (const auto& contour : culledcontours) {
+			drawContours(image, vector<vector<Point>>{contour}, 0, Scalar(0, 0, 255), 1);
+			Moments M = moments(contour);
+			int cx = int(M.m10 / M.m00);
+			int cy = int(M.m01 / M.m00);
+			int baseline=0;
+			float fontScale = 0.5;
+			Size s = getTextSize(std::to_string(count), FONT_HERSHEY_COMPLEX_SMALL, fontScale, 1, &baseline);
+			cx -= s.width/2;
+			cy += s.height/2;
+			putText(image, std::to_string(count), Point(cx,cy), FONT_HERSHEY_COMPLEX_SMALL, fontScale, Scalar(0,0,255), 1, LINE_AA);
+			count++;
+		}
 		cv::imwrite(destimage, image);
 	}
 
